@@ -1,21 +1,37 @@
 import arcade
-from pyglet.event import EVENT_HANDLE_STATE
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "FlappyBirdus"
+
 BIRD_SPEED = 5
 LIMIT_ANGLE = 45
+
 GRAVITATION = 0.2
 GRAVITATION_ANGLE = 0.4
+
+DISTANCE = 150
+PIPE_SPEED = 4
+
+
+class Pipe(arcade.Sprite):
+    def __init__(self):
+        super().__init__("images/pipe.png", 0.2, flipped_vertically=True)
+
+    def update(self):
+        self.center_x -= self.change_x
+        if self.right < 0:
+            self.left = SCREEN_WIDTH
+
 
 class Bird(arcade.Sprite):
     def __init__(self):
         super().__init__("images/bird/bluebird-downflap.png", 1)
         self.angle = 0
+        self.change_angle = 0
 
-    def update(self, delta_time: float = 1 / 60, *args, **kwargs) -> None:
-        self.angle += self.change_angle
+    def update(self):
+        self.angle -= self.change_angle
         self.center_y += self.change_y
 
         self.change_y -= GRAVITATION
@@ -39,11 +55,11 @@ class Game(arcade.Window):
     def __init__(self, width, height, title):
         super().__init__(width, height, title)
         self.bg = arcade.load_texture("images/bg.png")
-        self.fullscreen_rect = arcade.Rect(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT,
-                                           SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.bird = Bird()
+        self.pipe_list = arcade.SpriteList()
+        self.grass = arcade.load_texture("images/grass.png")
 
-    def on_key_press(self, symbol: int, modifiers: int) -> EVENT_HANDLE_STATE:
+    def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.SPACE:
             self.bird.change_y = BIRD_SPEED
             self.bird.change_angle = -7
@@ -52,16 +68,33 @@ class Game(arcade.Window):
         self.bird.center_x = 50
         self.bird.center_y = SCREEN_HEIGHT / 2
 
-    def on_draw(self) -> EVENT_HANDLE_STATE:
-        self.clear((255, 255, 255))
-        arcade.draw_texture_rect(self.bg, self.fullscreen_rect)
-        arcade.draw_sprite(self.bird)
+        for i in range(6):
+            pipe_bottom = Pipe()
+            pipe_bottom.center_y = 45
+            pipe_bottom.center_x = DISTANCE * i + SCREEN_WIDTH
+            pipe_bottom.change_x = PIPE_SPEED
+            self.pipe_list.append(pipe_bottom)
 
-    def on_update(self, delta_time: float) -> bool | None:
-        self.bird.update(delta_time)
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                                      SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
+
+        self.pipe_list.draw()
+
+        arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, SCREEN_WIDTH, SCREEN_HEIGHT, self.grass)
+        self.bird.draw()
+
+    def update(self, delta_time):
+        self.bird.update()
+        self.pipe_list.update()
 
 
-window = Game(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-window.setup()
+def main():
+    window = Game(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window.setup()
+    arcade.run()
 
-arcade.run()
+
+if __name__ == "__main__":
+    main()
