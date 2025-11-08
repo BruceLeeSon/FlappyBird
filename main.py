@@ -31,6 +31,8 @@ class Bird(arcade.Sprite):
         super().__init__("images/bird/bluebird-downflap.png", 1)
         self.angle = 0
         self.change_angle = 0
+        self.hit_sound = arcade.load_sound("audio/hit.wav")
+        self.wing_sound = arcade.load_sound("audio/wing.wav")
 
     def update(self):
         self.angle -= self.change_angle
@@ -67,6 +69,7 @@ class Game(arcade.Window):
     def on_key_press(self, symbol, modifiers):
         if self.game == True:
             if symbol == arcade.key.SPACE:
+                self.bird.wing_sound.play(volume=0.20)
                 self.bird.change_y = BIRD_SPEED
                 self.bird.change_angle = -7
 
@@ -105,6 +108,7 @@ class Game(arcade.Window):
             self.pipe_list.update()
             hit_list = arcade.check_for_collision_with_list(self.bird, self.pipe_list)
             if len(hit_list) > 0:
+                self.bird.hit_sound.play(volume=0.20)
                 self.bird.stop()
                 self.game = False
                 for pipe in self.pipe_list:
